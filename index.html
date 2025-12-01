@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Gradient Map Generator</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #ff5675;
+        color: red;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+    }
+
+    .controls {
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .stop {
+        margin: 5px;
+    }
+
+    canvas {
+        border: 2px solid white;
+        margin-top: 20px;
+        max-width: 90vw;
+    }
+
+    input[type="color"] {
+        width: 60px;
+        height: 35px;
+        border: none;
+    }
+</style>
+</head>
+<body>
+
+<h2>Gradient Map Generator</h2>
+
+<div class="controls">
+    <label>Upload Image: </label>
+    <input type="file" id="imgUpload" accept="image/*">
+    <br><br>
+
+    <div id="gradientStops">
+        <div class="stop">
+            <label>Stop 1: </label>
+            <input type="color" value="#0000ff" class="gradColor">
+        </div>
+        <div class="stop">
+            <label>Stop 2: </label>
+            <input type="color" value="#ff00ff" class="gradColor">
+        </div>
+    </div>
+
+    <br>
+    <button id="addStop">Add Gradient Stop</button>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+    const upload = document.getElementById("imgUpload");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const addStopButton = document.getElementById("addStop");
+    const stopsContainer = document.getElementById("gradientStops");
+
+    let originalImage = null;
+
+    // Add gradient stop
+    addStopButton.addEventListener("click", () => {
+        const count = stopsContainer.querySelectorAll(".stop").length + 1;
+
+        const div = document.createElement("div");
+        div.className = "stop";
+        div.innerHTML = `
+            <label>Stop ${count}: </label>
+            <input type="color" class="gradColor" value="#ffffff">
+        `;
+
+        stopsContainer.appendChild(div);
+
+        updateListeners();
+        applyGradientMap();
+    });
+
+    // Re-attach event listeners
+    function updateListeners() {
+        const colors = document.querySelectorAll(".gradColor");
+        colors.forEach(input => {
+            input.onchange = applyGradientMap;
+        });
+    }
+
+    updateListeners();
+
+    // Load image
+    upload.addEventListener("change", function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        const img = new Image();
+        img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            originalImage = img;
+            applyGradientMap();
+        };
+        img.src = URL.createObjectURL(file);
+    });
+
+    function applyGradientMap() {
+        if (!originalImage) return;
+
+        ctx.drawImage(originalImage, 0, 0);
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imgData.data;
+
+        const stops = [...document.querySelectorAll(".gradColor")].map(c => hexToRgb(c.value));
+
+        for (let i = 0; i < data.length; i += 4) {
+            const light = (data[i] + data[i+1] + data[i+2]) / 3 / 255;
+
+            const scaled = light * (stops.length - 1);
+            const index = Math.floor(scaled);
+            const t = scaled - index;
+
+            const c1 = stops[index];
+            const c2 = stops[Math.min(index + 1, stops.length - 1)];
+
+            data[i]     = c1.r * (1 - t) + c2.r * t;
+            data[i + 1] = c1.g * (1 - t) + c2.g * t;
+            data[i + 2] = c1.b * (1 - t) + c2.b * t;
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+    }
+
+    function hexToRgb(hex) {
+        const bigint = parseInt(hex.slice(1), 16);
+        return {
+            r: (bigint >> 16) & 255,
+            g: (bigint >> 8) & 255,
+            b: bigint & 255
+        };
+    }
+</script>
+
+</body>
+</html>
