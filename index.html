@@ -3,217 +3,280 @@
 <head>
 <title>Crappy Gradient Stop Generator</title>
 <link rel="icon" type="image/png" href="newicon.png">
+
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #111111;
-        color: white;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 20px;
-    }
+body {
+    font-family: Arial, sans-serif;
+    background: #111111;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    transition: 0.3s;
+    background-size: cover;
+    background-position: center;
+}
 
-    .controls {
-        margin-bottom: 20px;
-        text-align: center;
-    }
+/* ===== MODES ===== */
 
-    .stop {
-        margin: 5px;
-    }
+.lightMode {
+    background: #eeeeee;
+    color: black;
+}
 
-    canvas {
-        border: 2px solid white;
-        margin-top: 20px;
-        max-width: 90vw;
-    }
+.kiwiMode {
+    background-image: url('kiwi.png');
+    color: #c8ffb8;
+}
 
-    input[type="color"] {
-        width: 60px;
-        height: 35px;
-        border: none;
-    }
+.sangMode {
+    background-image: url('sanguche.png');
+    color: black;
+}
 
-    .removeBtn {
-        margin-left: 10px;
-        background: #ff2e2e;
-        color: white;
-        border: none;
-        padding: 4px 8px;
-        cursor: pointer;
-        border-radius: 5px;
-    }
+/* ===== UI ===== */
 
-    #downloadBtn {
-        margin-top: 10px;
-        background: #00ff9c;
-        color: black;
-        padding: 10px 15px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 16px;
-        font-weight: bold;
-    }
+.controls {
+    margin-bottom: 20px;
+    text-align: center;
+}
 
+.stop {
+    margin: 5px;
+}
+
+canvas {
+    border: 2px solid white;
+    margin-top: 20px;
+    max-width: 90vw;
+}
+
+input[type="color"] {
+    width: 60px;
+    height: 35px;
+    border: none;
+}
+
+.removeBtn {
+    margin-left: 10px;
+    background: #ff2e2e;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+#downloadBtn, #addStop, #codeBtn {
+    margin-top: 10px;
+    background: #00ff9c;
+    color: black;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+}
 </style>
 </head>
+
 <body>
 
-<h2>Crappy Gradient Stop Generator</h2>
+<h2 id="titleText">Crappy Gradient Stop Generator</h2>
 
 <div class="controls">
-    <label>Upload Image: </label>
-    <input type="file" id="imgUpload" accept="image/*">
-    <br><br>
+<label>Upload Image: </label>
+<input type="file" id="imgUpload" accept="image/*">
+<br><br>
 
-    <div id="gradientStops">
-        <div class="stop">
-            <label>Stop 1: </label>
-            <input type="color" value="#0000ff" class="gradColor">
-            <button class="removeBtn">X</button>
-        </div>
-        <div class="stop">
-            <label>Stop 2: </label>
-            <input type="color" value="#ff00ff" class="gradColor">
-            <button class="removeBtn">X</button>
-        </div>
-    </div>
+<div id="gradientStops">
+<div class="stop">
+<label>Stop 1: </label>
+<input type="color" value="#0000ff" class="gradColor">
+<button class="removeBtn">X</button>
+</div>
 
-    <br>
-    <button id="addStop">Add Gradient Stop</button>
-    <br><br>
-    <button id="downloadBtn">Download Image</button>
+<div class="stop">
+<label>Stop 2: </label>
+<input type="color" value="#ff00ff" class="gradColor">
+<button class="removeBtn">X</button>
+</div>
+</div>
+
+<br>
+<button id="addStop">Add Gradient Stop</button>
+<button id="codeBtn">Enter Code</button>
+<br><br>
+<button id="downloadBtn">Download Image</button>
 </div>
 
 <canvas id="canvas"></canvas>
 
 <script>
-    const upload = document.getElementById("imgUpload");
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-    const addStopButton = document.getElementById("addStop");
-    const downloadBtn = document.getElementById("downloadBtn");
-    const stopsContainer = document.getElementById("gradientStops");
+const upload = document.getElementById("imgUpload");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const addStopButton = document.getElementById("addStop");
+const downloadBtn = document.getElementById("downloadBtn");
+const stopsContainer = document.getElementById("gradientStops");
+const codeBtn = document.getElementById("codeBtn");
+const titleText = document.getElementById("titleText");
 
-    let originalImage = null;
+let originalImage = null;
 
-    // Add gradient stop
-    addStopButton.addEventListener("click", () => {
-        const count = stopsContainer.querySelectorAll(".stop").length + 1;
+/* ===== GRADIENT SYSTEM ===== */
 
-        const div = document.createElement("div");
-        div.className = "stop";
-        div.innerHTML = `
-            <label>Stop ${count}: </label>
-            <input type="color" class="gradColor" value="#ffffff">
-            <button class="removeBtn">X</button>
-        `;
+addStopButton.addEventListener("click", () => {
+const count = stopsContainer.querySelectorAll(".stop").length + 1;
 
-        stopsContainer.appendChild(div);
+const div = document.createElement("div");
+div.className = "stop";
+div.innerHTML = `
+<label>Stop ${count}: </label>
+<input type="color" class="gradColor" value="#ffffff">
+<button class="removeBtn">X</button>
+`;
 
-        updateListeners();
+stopsContainer.appendChild(div);
+updateListeners();
+applyGradientMap();
+});
+
+function updateListeners() {
+document.querySelectorAll(".gradColor").forEach(i => i.onchange = applyGradientMap);
+
+document.querySelectorAll(".removeBtn").forEach(btn => {
+btn.onclick = () => {
+btn.parentElement.remove();
+renameStops();
+applyGradientMap();
+};
+});
+}
+
+function renameStops() {
+document.querySelectorAll(".stop").forEach((stop, i) => {
+stop.querySelector("label").textContent = `Stop ${i + 1}: `;
+});
+}
+
+updateListeners();
+
+upload.addEventListener("change", function () {
+const file = this.files[0];
+if (!file) return;
+
+const img = new Image();
+img.onload = () => {
+canvas.width = img.width;
+canvas.height = img.height;
+originalImage = img;
+applyGradientMap();
+};
+img.src = URL.createObjectURL(file);
+});
+
+function applyGradientMap() {
+if (!originalImage) return;
+
+ctx.drawImage(originalImage, 0, 0);
+const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+const data = imgData.data;
+
+const stops = [...document.querySelectorAll(".gradColor")].map(c => hexToRgb(c.value));
+if (stops.length === 0) return;
+
+for (let i = 0; i < data.length; i += 4) {
+const light = (data[i] + data[i+1] + data[i+2]) / 3 / 255;
+
+const scaled = light * (stops.length - 1);
+const index = Math.floor(scaled);
+const t = scaled - index;
+
+const c1 = stops[index];
+const c2 = stops[Math.min(index + 1, stops.length - 1)];
+
+data[i]     = c1.r * (1 - t) + c2.r * t;
+data[i + 1] = c1.g * (1 - t) + c2.g * t;
+data[i + 2] = c1.b * (1 - t) + c2.b * t;
+}
+
+ctx.putImageData(imgData, 0, 0);
+}
+
+downloadBtn.addEventListener("click", () => {
+const link = document.createElement("a");
+link.download = "gradient188_image.png";
+link.href = canvas.toDataURL("image/png");
+link.click();
+});
+
+function hexToRgb(hex) {
+const bigint = parseInt(hex.slice(1), 16);
+return {
+r: (bigint >> 16) & 255,
+g: (bigint >> 8) & 255,
+b: bigint & 255
+};
+}
+
+/* ===== SECRET CODE SYSTEM ===== */
+
+codeBtn.addEventListener("click", () => {
+const code = prompt("Type Code:");
+if (!code) return;
+
+// reset first
+document.body.className = "";
+document.body.style.backgroundImage = "";
+
+// default title (NO KIWI)
+titleText.textContent = "Crappy Gradient Stop Generator";
+
+if (code === "LIGHTBG9") {
+
+    document.body.className = "lightMode";
+    alert("Congrats");
+
+}
+
+else if (code === "SANGUCHE929") {
+
+    document.body.className = "sangMode";
+
+    const stops = document.querySelectorAll(".gradColor");
+    if (stops.length <= 2) {
+        stops.forEach(s => s.value = "#94F488");
         applyGradientMap();
-    });
-
-    // Re-attach event listeners
-    function updateListeners() {
-        const colors = document.querySelectorAll(".gradColor");
-        const removeButtons = document.querySelectorAll(".removeBtn");
-
-        colors.forEach(input => {
-            input.onchange = applyGradientMap;
-        });
-
-        // Remove gradient stop
-        removeButtons.forEach(btn => {
-            btn.onclick = () => {
-                btn.parentElement.remove();
-                renameStops();
-                applyGradientMap();
-            };
-        });
     }
 
-    // Renumber stop labels
-    function renameStops() {
-        const stops = document.querySelectorAll(".stop");
-        stops.forEach((stop, i) => {
-            stop.querySelector("label").textContent = `Stop ${i + 1}: `;
-        });
-    }
+    alert("U Got It");
 
-    updateListeners();
+}
 
-    // Load image
-    upload.addEventListener("change", function () {
-        const file = this.files[0];
-        if (!file) return;
+else if (code === "KIWIBUDDY") {
 
-        const img = new Image();
-        img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            originalImage = img;
-            applyGradientMap();
-        };
-        img.src = URL.createObjectURL(file);
-    });
+    document.body.className = "kiwiMode";
 
-    function applyGradientMap() {
-        if (!originalImage) return;
+    // 🥝 ONLY HERE
+    titleText.textContent = "Crappy Gradient Stop Generator🥝";
 
-        ctx.drawImage(originalImage, 0, 0);
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imgData.data;
+    alert("Ok?");
 
-        const stops = [...document.querySelectorAll(".gradColor")].map(c => hexToRgb(c.value));
-        if (stops.length === 0) return;
+}
 
-        for (let i = 0; i < data.length; i += 4) {
-            const light = (data[i] + data[i+1] + data[i+2]) / 3 / 255;
-
-            const scaled = light * (stops.length - 1);
-            const index = Math.floor(scaled);
-            const t = scaled - index;
-
-            const c1 = stops[index];
-            const c2 = stops[Math.min(index + 1, stops.length - 1)];
-
-            data[i]     = c1.r * (1 - t) + c2.r * t;
-            data[i + 1] = c1.g * (1 - t) + c2.g * t;
-            data[i + 2] = c1.b * (1 - t) + c2.b * t;
-        }
-
-        ctx.putImageData(imgData, 0, 0);
-    }
-
-    // Download final image
-    downloadBtn.addEventListener("click", () => {
-        const link = document.createElement("a");
-        link.download = "gradient188_image.png";
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-    });
-
-    function hexToRgb(hex) {
-        const bigint = parseInt(hex.slice(1), 16);
-        return {
-            r: (bigint >> 16) & 255,
-            g: (bigint >> 8) & 255,
-            b: bigint & 255
-        };
-    }
+else {
+    alert("Try A Valid Code");
+}
+});
 </script>
 
-<h1>1.2.10</h1>
-<a href="https://log833.github.io/cgsg-readme" target="_blank" rel="noopener noreferrer">
-  README
-</a>
-<a href="https://log833.github.io/cgsg-changelog" target="_blank" rel="noopener noreferrer">
-  Changelog
-</a>
+<h1>1.2.12</h1>
+
+<a href="https://log833.github.io/cgsg-readme" target="_blank" rel="noopener noreferrer">README</a>
+<a href="https://log833.github.io/cgsg-changelog" target="_blank" rel="noopener noreferrer">Changelog</a>
 
 </body>
 </html>
