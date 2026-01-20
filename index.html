@@ -35,6 +35,11 @@ body {
     color: black;
 }
 
+.bluecyanMode {
+    background-image: url('blue-cyan.png');
+    color: black;
+}
+    
 /* ===== UI ===== */
 
 .controls {
@@ -265,6 +270,22 @@ else if (code === "KIWIBUDDY") {
 
     alert("Ok?");
 
+}
+
+    else if (code === "BLUECYAN") {
+
+    document.body.className = "bluecyanMode
+    
+    const stops = document.querySelectorAll(".gradColor");
+
+    if (stops.length >= 2) {
+        stops[0].value = "#0000ff";   // BLUE
+        stops[1].value = "#00ffff";   // CYAN
+    }
+
+    applyGradientMap();
+
+    alert("Blue & Cyan Preset Activated!");
 }
 
 else {
