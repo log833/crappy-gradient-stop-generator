@@ -35,6 +35,11 @@ body {
     color: black;
 }
 
+.ogMode {
+    background-image: url('og-xd.png');
+    color: black;
+}
+
 /* ===== UI ===== */
 
 .controls {
@@ -266,7 +271,21 @@ else if (code === "KIWIBUDDY") {
     alert("Ok?");
 
 }
-  
+
+else if (e.key === "5") {
+
+    document.body.className = "ogMode";
+
+    const stops = document.querySelectorAll(".gradColor");
+    if (stops.length <= 2) {
+        stops.forEach(s => s.value = "#00ffff")
+        applyGradientMap();
+     }
+
+    alert("Easter Egg");
+
+}
+
 else {
     alert("Try A Valid Code");
 }
