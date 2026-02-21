@@ -68,6 +68,13 @@ canvas {
   border:1px solid #333;
   border-radius:6px;
 }
+
+body.easter-egg {
+  background-image: url("og.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 </style>
 </head>
 <body>
@@ -81,7 +88,7 @@ canvas {
 <button onclick="addStop()">+Add</button>
 
 <label>
-Smoothness
+Curve
 <input type="range" min="0.2" max="3" step="0.01" value="1" id="curve">
 </label>
 
@@ -219,6 +226,18 @@ function download(){
 }
 
 renderStops();
+
+let eggEnabled = false;
+
+document.addEventListener("keydown", (e) => {
+  // Ignore if typing in inputs
+  if (e.target.tagName === "INPUT") return;
+
+  if (e.key === "5") {
+    eggEnabled = !eggEnabled;
+    document.body.classList.toggle("easter-egg", eggEnabled);
+  }
+});
 </script>
 
 <h3>1.0 Edition:</h3>
