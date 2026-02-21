@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Crappy Gradient Stop Generator 2.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  background:#111;
+  color:white;
+  font-family:Arial, sans-serif;
+  margin:0;
+  padding:12px;
+}
+
+h2 {
+  text-align:center;
+}
+
+button {
+  background:#333;
+  color:white;
+  border:none;
+  padding:8px 12px;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+button:hover {
+  background:#555;
+}
+
+input[type="file"] {
+  width:100%;
+  margin-bottom:10px;
+}
+
+#controls {
+  max-width:600px;
+  margin:auto;
+}
+
+.stop {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin:6px 0;
+}
+
+.stop input[type="range"] {
+  flex:1;
+}
+
+.stop button {
+  background:#a00;
+}
+
+label {
+  display:block;
+  margin-top:10px;
+}
+
+canvas {
+  width:100%;
+  margin-top:12px;
+  border:1px solid #333;
+  border-radius:6px;
+}
+</style>
+</head>
+<body>
+
+<h2>Crappy Gradient Stop Generator 2.0</h2>
+
+<input type="file" accept="image/*" id="imageInput">
+
+<div id="controls"></div>
+
+<button onclick="addStop()">+Add</button>
+
+<label>
+Curve
+<input type="range" min="0.2" max="3" step="0.01" value="1" id="curve">
+</label>
+
+<button onclick="download()">Download</button>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+let img = new Image();
+
+let stops = [
+  {pos:0.0, color:"#ff0000"},
+  {pos:0.33, color:"#ffff00"},
+  {pos:0.66, color:"#00ff00"},
+  {pos:1.0, color:"#0000ff"}
+];
+
+function renderStops() {
+  const controls = document.getElementById("controls");
+  controls.innerHTML = "";
+
+  stops.forEach((s,i)=>{
+    const row = document.createElement("div");
+    row.className="stop";
+
+    const color = document.createElement("input");
+    color.type="color";
+    color.value=s.color;
+    color.oninput=e=>{
+      s.color=e.target.value;
+      apply();
+    };
+
+    const range = document.createElement("input");
+    range.type="range";
+    range.min=0;
+    range.max=100;
+    range.value=s.pos*100;
+    range.oninput=e=>{
+      s.pos=e.target.value/100;
+      apply();
+    };
+
+    const del = document.createElement("button");
+    del.textContent="X";
+    del.onclick=()=>{
+      stops.splice(i,1);
+      renderStops();
+      apply();
+    };
+
+    row.append(color,range,del);
+    controls.appendChild(row);
+  });
+}
+
+function addStop() {
+  stops.push({pos:0.5,color:"#ffffff"});
+  renderStops();
+  apply();
+}
+
+document.getElementById("imageInput").onchange=e=>{
+  const f=e.target.files[0];
+  if(!f) return;
+  img.src=URL.createObjectURL(f);
+};
+
+img.onload=()=>{
+  canvas.width=img.width;
+  canvas.height=img.height;
+  apply();
+};
+
+document.getElementById("curve").oninput=apply;
+
+function apply() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(img,0,0);
+
+  const image=ctx.getImageData(0,0,canvas.width,canvas.height);
+  const d=image.data;
+
+  stops.sort((a,b)=>a.pos-b.pos);
+  const curve=parseFloat(document.getElementById("curve").value);
+
+  for(let i=0;i<d.length;i+=4){
+    const lum=(0.299*d[i]+0.587*d[i+1]+0.114*d[i+2])/255;
+    let v=Math.pow(lum,curve);
+
+    let s1=stops[0], s2=stops[stops.length-1];
+    for(let j=0;j<stops.length-1;j++){
+      if(v>=stops[j].pos && v<=stops[j+1].pos){
+        s1=stops[j];
+        s2=stops[j+1];
+        break;
+      }
+    }
+
+    const t=(v-s1.pos)/(s2.pos-s1.pos||1);
+    const c1=hex(s1.color);
+    const c2=hex(s2.color);
+
+    d[i]=c1.r+(c2.r-c1.r)*t;
+    d[i+1]=c1.g+(c2.g-c1.g)*t;
+    d[i+2]=c1.b+(c2.b-c1.b)*t;
+  }
+
+  ctx.putImageData(image,0,0);
+}
+
+function hex(h){
+  h=h.replace("#","");
+  return {
+    r:parseInt(h.slice(0,2),16),
+    g:parseInt(h.slice(2,4),16),
+    b:parseInt(h.slice(4,6),16)
+  };
+}
+
+function download(){
+  const a=document.createElement("a");
+  a.download="gradient-map.png";
+  a.href=canvas.toDataURL("image/png");
+  a.click();
+}
+
+renderStops();
+</script>
+
+<h3>1.0 Edition:</h3>
+<a href="https://log833.github.io/crappy-gradient-stop-generator/" target="_blank" rel="noopener noreferrer">
+  Here
+</a>
+
+</body>
+</html>
