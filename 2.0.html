@@ -14,8 +14,9 @@ body {
   padding:12px;
 }
 
-h2 {
+h1 {
   text-align:center;
+  font-size:20px;
 }
 
 button {
@@ -71,7 +72,7 @@ canvas {
 </head>
 <body>
 
-<h2>Crappy Gradient Stop Generator 2.0</h2>
+<h1>Crappy Gradient Stop Generator 2.0</h1>
 
 <input type="file" accept="image/*" id="imageInput">
 
@@ -80,7 +81,7 @@ canvas {
 <button onclick="addStop()">+Add</button>
 
 <label>
-Curve
+Smoothness
 <input type="range" min="0.2" max="3" step="0.01" value="1" id="curve">
 </label>
 
@@ -90,8 +91,11 @@ Curve
 
 <script>
 const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
 let img = new Image();
+let sourceData = null;
+let needsUpdate = false;
 
 let stops = [
   {pos:0.0, color:"#ff0000"},
@@ -101,8 +105,8 @@ let stops = [
 ];
 
 function renderStops() {
-  const controls = document.getElementById("controls");
-  controls.innerHTML = "";
+  const c = document.getElementById("controls");
+  c.innerHTML = "";
 
   stops.forEach((s,i)=>{
     const row = document.createElement("div");
@@ -111,38 +115,32 @@ function renderStops() {
     const color = document.createElement("input");
     color.type="color";
     color.value=s.color;
-    color.oninput=e=>{
-      s.color=e.target.value;
-      apply();
-    };
+    color.oninput=e=>{ s.color=e.target.value; schedule(); };
 
     const range = document.createElement("input");
     range.type="range";
     range.min=0;
     range.max=100;
     range.value=s.pos*100;
-    range.oninput=e=>{
-      s.pos=e.target.value/100;
-      apply();
-    };
+    range.oninput=e=>{ s.pos=e.target.value/100; schedule(); };
 
     const del = document.createElement("button");
     del.textContent="X";
     del.onclick=()=>{
       stops.splice(i,1);
       renderStops();
-      apply();
+      schedule();
     };
 
     row.append(color,range,del);
-    controls.appendChild(row);
+    c.appendChild(row);
   });
 }
 
 function addStop() {
   stops.push({pos:0.5,color:"#ffffff"});
   renderStops();
-  apply();
+  schedule();
 }
 
 document.getElementById("imageInput").onchange=e=>{
@@ -154,48 +152,58 @@ document.getElementById("imageInput").onchange=e=>{
 img.onload=()=>{
   canvas.width=img.width;
   canvas.height=img.height;
-  apply();
+  ctx.drawImage(img,0,0);
+  sourceData = ctx.getImageData(0,0,canvas.width,canvas.height);
+  schedule();
 };
 
-document.getElementById("curve").oninput=apply;
+document.getElementById("curve").oninput = schedule;
 
-function apply() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.drawImage(img,0,0);
+function schedule(){
+  if(!needsUpdate){
+    needsUpdate = true;
+    requestAnimationFrame(apply);
+  }
+}
 
-  const image=ctx.getImageData(0,0,canvas.width,canvas.height);
+function apply(){
+  needsUpdate = false;
+  if(!sourceData) return;
+
+  const image = new ImageData(
+    new Uint8ClampedArray(sourceData.data),
+    canvas.width,
+    canvas.height
+  );
+
   const d=image.data;
-
-  stops.sort((a,b)=>a.pos-b.pos);
   const curve=parseFloat(document.getElementById("curve").value);
+  stops.sort((a,b)=>a.pos-b.pos);
 
   for(let i=0;i<d.length;i+=4){
-    const lum=(0.299*d[i]+0.587*d[i+1]+0.114*d[i+2])/255;
-    let v=Math.pow(lum,curve);
+    let lum=(d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114)/255;
+    lum = Math.pow(lum, curve);
 
     let s1=stops[0], s2=stops[stops.length-1];
     for(let j=0;j<stops.length-1;j++){
-      if(v>=stops[j].pos && v<=stops[j+1].pos){
-        s1=stops[j];
-        s2=stops[j+1];
-        break;
+      if(lum>=stops[j].pos && lum<=stops[j+1].pos){
+        s1=stops[j]; s2=stops[j+1]; break;
       }
     }
 
-    const t=(v-s1.pos)/(s2.pos-s1.pos||1);
-    const c1=hex(s1.color);
-    const c2=hex(s2.color);
+    const t=(lum-s1.pos)/(s2.pos-s1.pos||1);
+    const c1=rgb(s1.color), c2=rgb(s2.color);
 
-    d[i]=c1.r+(c2.r-c1.r)*t;
-    d[i+1]=c1.g+(c2.g-c1.g)*t;
-    d[i+2]=c1.b+(c2.b-c1.b)*t;
+    d[i]   = c1.r + (c2.r-c1.r)*t;
+    d[i+1] = c1.g + (c2.g-c1.g)*t;
+    d[i+2] = c1.b + (c2.b-c1.b)*t;
   }
 
   ctx.putImageData(image,0,0);
 }
 
-function hex(h){
-  h=h.replace("#","");
+function rgb(h){
+  h=h.slice(1);
   return {
     r:parseInt(h.slice(0,2),16),
     g:parseInt(h.slice(2,4),16),
