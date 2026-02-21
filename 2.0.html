@@ -12,6 +12,14 @@ body {
   font-family:Arial, sans-serif;
   margin:0;
   padding:12px;
+  transition: background-image 0.3s ease;
+}
+
+body.easter-egg {
+  background-image: url("og.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 h1 {
@@ -69,11 +77,8 @@ canvas {
   border-radius:6px;
 }
 
-body.easter-egg {
-  background-image: url("og.png");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+a {
+  color:#7af;
 }
 </style>
 </head>
@@ -228,11 +233,8 @@ function download(){
 renderStops();
 
 let eggEnabled = false;
-
 document.addEventListener("keydown", (e) => {
-  // Ignore if typing in inputs
   if (e.target.tagName === "INPUT") return;
-
   if (e.key === "5") {
     eggEnabled = !eggEnabled;
     document.body.classList.toggle("easter-egg", eggEnabled);
