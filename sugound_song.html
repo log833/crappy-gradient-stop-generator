@@ -7,9 +7,9 @@
 <body>
   <h2>Our Sugound Song</h2>
 
-  <!-- Audio element -->
-  <audio id="myAudio" src="sugound-song.wav" loop="false"></audio>
-
+  <!-- Audio element without loop -->
+  <audio id="myAudio" src="sugound-song.wav"></audio>
+  
   <!-- Play Button -->
   <button onclick="playSound()">Play</button>
 
@@ -21,6 +21,8 @@
   <script>
     function playSound() {
       const audio = document.getElementById('myAudio');
+      audio.pause();
+      audio.currentTime = 0;
       audio.play();
     }
   </script>
