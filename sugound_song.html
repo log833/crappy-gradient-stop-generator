@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Our Sugound Song</title>
+</head>
+<body>
+  <h2>Our Sugound Song</h2>
+
+  <!-- Audio element -->
+  <audio id="myAudio" src="sugound-song.wav"></audio>
+
+  <!-- Play Button -->
+  <button onclick="playSound()">Play</button>
+
+  <!-- Download Button -->
+  <a href="sugound-song.wav" download="sugound-song.wav">
+    <button>Download</button>
+  </a>
+
+  <script>
+    function playSound() {
+      const audio = document.getElementById('myAudio');
+      audio.play();
+    }
+  </script>
+</body>
+</html>
