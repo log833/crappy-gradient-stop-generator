@@ -2,29 +2,51 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Our Sugound Song</title>
+<title>Sugound Songs</title>
 </head>
 <body>
-  <h2>Our Sugound Song</h2>
 
-  <!-- Audio element without loop -->
-  <audio id="myAudio" src="sugound-song.wav"></audio>
-  
-  <!-- Play Button -->
-  <button onclick="playSound()">Play</button>
+  <!-- First song section -->
+  <h2>Our Sugound Song [2/24/2026 - 2/25/2026]</h2>
 
-  <!-- Download Button -->
+  <audio id="audio1" src="sugound-song.wav"></audio>
+  <button onclick="playSound1()">Play</button>
   <a href="sugound-song.wav" download="sugound-song.wav">
     <button>Download</button>
   </a>
 
+  <hr>
+
+  <!-- Second song section -->
+  <h2>Official Song Of Sugound [2/25/2026 - Now]</h2>
+
+  <audio id="audio2" src="sugound-song-v2.wav"></audio>
+  <button onclick="playSound2()">Play</button>
+  <a href="another-song.wav" download="sugound-song-v2.wav">
+    <button>Download</button>
+  </a>
+
   <script>
-    function playSound() {
-      const audio = document.getElementById('myAudio');
-      audio.pause();
-      audio.currentTime = 0;
-      audio.play();
+    const audio1 = document.getElementById('audio1');
+    const audio2 = document.getElementById('audio2');
+
+    function stopAll() {
+      audio1.pause();
+      audio1.currentTime = 0;
+      audio2.pause();
+      audio2.currentTime = 0;
+    }
+
+    function playSound1() {
+      stopAll();
+      audio1.play();
+    }
+
+    function playSound2() {
+      stopAll();
+      audio2.play();
     }
   </script>
+
 </body>
 </html>
